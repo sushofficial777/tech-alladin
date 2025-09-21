@@ -14,7 +14,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #ffffff;
     --foreground: #ededed;
   }
 }
@@ -23,4 +23,56 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background: black;
+}
+
+
+.section_gre {
+  background-image: linear-gradient(to bottom, #ea00f7, #f059fa, #f583fd, #f9a6fe, #fcc7ff, #f6c2fd, #f0befc, #eab9fa, #d391f9, #b569f9, #8b42fb, #4417ff);
+}
+
+.particle {
+  width: 80px !important;
+  height: 80px;
+  position: absolute;
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+  /* subtle glow */
+  box-shadow: 0 0 2px #9D00FF, 0 0 10px #9D00FF, 0 0 2px #9D00FF;
+}
+
+.particle.purple {
+  background: #9d00ff73;
+
+}
+
+.particle.white {
+  background: #ffffffaf;
+  /* box-shadow: 0 0 3px #FFFFFF, 0 0 10px #FFFFFF, 0 0 24px #FFFFFF; */
+}
+
+.wrapperRollingText {
+  white-space: nowrap;
+  position: absolute;
+  bottom: 5%;
+  /* width: 100vw; */
+/* 
+  --mask: linear-gradient(
+    90deg,
+    hsla(0, 0%, 0%, 0) 15%,
+    hsl(0, 0%, 100%) 25%,
+    hsl(0, 0%, 100%) 75%,
+    hsla(0, 0%, 0%, 0) 85%
+  ); */
+
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
+}
+.rollingText {
+  white-space: nowrap;
+  font-weight: bold;
+  font-size: var(--fontExtraBig);
+  display: inline-block;
+  /* padding-left: 10px; */
 }
