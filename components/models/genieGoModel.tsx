@@ -34,7 +34,7 @@ type GLTFResult = GLTF & {
 
 export function GenieOne(props: ModelProps) {
 
-  const { nodes, materials } = useGLTF('/assets/models/model_genie_1.gltf') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('/assets/models/genie_go.gltf') as unknown as GLTFResult
   const { gradient, ...groupProps } = props;
 
   // Optimized materials for better performance
@@ -73,7 +73,6 @@ export function GenieOne(props: ModelProps) {
         {...nodes.genie_body_1}
       >
         <MeshTransmissionMaterial {...materialProps} />
-
       </mesh>
 
       <group position={[-0.004, 0.172, 0.121]} rotation={[Math.PI / 2, 0, 1.636]} scale={0.93}>
@@ -115,4 +114,4 @@ export function GenieOne(props: ModelProps) {
 
 export const Model = GenieOne
 
-useGLTF.preload('/assets/models/model_genie_1.gltf')
+useGLTF.preload('/assets/models/genie_go.gltf')

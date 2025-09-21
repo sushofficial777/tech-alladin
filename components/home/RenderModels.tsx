@@ -5,13 +5,13 @@ import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Billboard, Bounds, Center, Environment, OrbitControls, Text } from "@react-three/drei";
 import gsap from "gsap";
-import { GenieOne, GenieTwo, GenieThree } from "@/components/models";
+import { GenieGo } from "@/components/models";
 import useDeviceType from "@/components/hooks/useDeviceType";
 import InteractiveText from "../models/textModel";
 
 // Lazy load the text component for better performance
 const LazyInteractiveText = lazy(() => import("../models/textModel"));
-const models = [GenieOne, GenieThree, GenieTwo];
+const models = [GenieGo];
 
 
 const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number }> = React.memo(({
@@ -30,12 +30,12 @@ const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number 
     }
   });
 
-  const Model = models[index];
+  const Model = models[0]; // Always use GenieGo model
   return (
     <Bounds clip observe margin={0.5}> {/* Reduced margin for better performance */}
       <Center disableZ>
         <group ref={groupRef} scale={scale}>
-          <Model />
+          <Model index={index} />
         </group>
       </Center>
     </Bounds>
@@ -85,8 +85,8 @@ const RenderModels: React.FC = React.memo(() => {
                 ease: "power2.in",
               });
 
-              // ✅ cycle: 0 → 1 → 2 → 0 …
-              setIndex((prev) => (prev + 1) % models.length);
+              // Keep the same model but cycle text
+              setIndex((prev) => (prev + 1) % texts.length);
             },
             onComplete: () => {
               // Fade new model back in
