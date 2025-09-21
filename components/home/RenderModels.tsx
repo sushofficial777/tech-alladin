@@ -14,13 +14,15 @@ const LazyInteractiveText = lazy(() => import("../models/textModel"));
 const models = [GenieGo];
 
 
-const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number }> = React.memo(({
+const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number; isMobile?: boolean }> = React.memo(({
   index,
   rotationY,
   scale = 3,
+  isMobile = false,
 }) => {
-  const groupRef = useRef<any>('');
+  const groupRef = useRef<THREE.Group>(null);
   const lastRotationY = useRef(rotationY);
+  const Model = models[0]; // Always use GenieGo model
 
   // Optimized rotation update - only when rotation actually changes
   useFrame(() => {
@@ -30,9 +32,8 @@ const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number 
     }
   });
 
-  const Model = models[0]; // Always use GenieGo model
   return (
-    <Bounds clip observe margin={0.5}> {/* Reduced margin for better performance */}
+    <Bounds clip observe margin={isMobile ? 0.3 : 0.5}> {/* Smaller margin on mobile */}
       <Center disableZ>
         <group ref={groupRef} scale={scale}>
           <Model index={index} />
@@ -43,8 +44,9 @@ const CyclingModel: React.FC<{ index: number; rotationY: number; scale?: number 
 }, (prevProps, nextProps) => {
   // Custom comparison for better memoization
   return prevProps.index === nextProps.index && 
-         prevProps.rotationY === nextProps.rotationY && 
-         prevProps.scale === nextProps.scale;
+         Math.abs(prevProps.rotationY - nextProps.rotationY) < 0.001 && // Use threshold for rotation
+         prevProps.scale === nextProps.scale &&
+         prevProps.isMobile === nextProps.isMobile;
 });
 
 const RenderModels: React.FC = React.memo(() => {
@@ -59,21 +61,33 @@ const RenderModels: React.FC = React.memo(() => {
   // Performance monitoring
   const frameCount = useRef(0);
   const lastTime = useRef(performance.now());
+  
+  // Cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      // Kill any running GSAP animations
+      gsap.killTweensOf(rotationY);
+      gsap.killTweensOf(".genie");
+    };
+  }, []);
 
   const texts = useMemo(() => ['DESIGN', 'DEPLOY', 'DEVELOP'], []);
+  
   useEffect(() => {
+    let mounted = true;
     const runCycle = () => {
-      // Step 1: Slow anticlockwise 90° - reduced duration for better performance
+      if (!mounted) return;
+      // Step 1: Slow anticlockwise 90° - exact original structure
       gsap.to(rotationY, {
         current: rotationY.current - Math.PI / 2,
-        duration: 2.5, // Reduced from 3
+        duration: 2.5,
         ease: "power3.in",
         onUpdate: () => setRotationValue(rotationY.current),
         onComplete: () => {
           // Step 2: Apply blur + fade while spinning fast
           gsap.to(rotationY, {
             current: rotationY.current - Math.PI * 1.5, // 540° spin (fast)
-            duration: 0.25, // Reduced from 0.3
+            duration: 0.25,
             ease: "power4.out",
             onUpdate: () => setRotationValue(rotationY.current),
             onStart: () => {
@@ -110,7 +124,13 @@ const RenderModels: React.FC = React.memo(() => {
     };
 
     runCycle();
-  }, [models.length]);
+    
+    // Cleanup function
+    return () => {
+      gsap.killTweensOf(rotationY);
+      gsap.killTweensOf(".genie");
+    };
+  }, [texts.length]);
 
 
   // Ensure spotlights always point to the character at the origin
@@ -130,8 +150,10 @@ const RenderModels: React.FC = React.memo(() => {
   const cameraFov = useMemo(() => isMobile ? 55 : 45, [isMobile]);
   const cameraZ = useMemo(() => isMobile ? 4.6 : 4.1, [isMobile]);
   
-  // Performance monitoring effect
+  // Performance monitoring effect with cleanup
   useEffect(() => {
+    let animationId: number;
+    
     const monitorPerformance = () => {
       frameCount.current++;
       const currentTime = performance.now();
@@ -145,50 +167,63 @@ const RenderModels: React.FC = React.memo(() => {
         lastTime.current = currentTime;
       }
       
-      requestAnimationFrame(monitorPerformance);
+      animationId = requestAnimationFrame(monitorPerformance);
     };
     
     monitorPerformance();
+    
+    // Cleanup function
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
   }, []);
 
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <Canvas
         camera={{ position: [-.5, 0, cameraZ], fov: cameraFov }}
-        shadows
+        shadows={!isMobile} // Disable shadows on mobile
+        dpr={isMobile ? [1, 2] : [1, 2]} // Limit pixel ratio on mobile
+        performance={{ min: 0.5 }} // Allow performance degradation
         style={{ touchAction: isMobile ? "pan-y" : "none" }}
       >
-        <ambientLight intensity={0.15} />
-        <directionalLight position={[3, 5, 4]} intensity={0.4} castShadow />
-        {/* Optimized neon spotlights - reduced intensity and complexity */}
+        <ambientLight intensity={isMobile ? 0.2 : 0.15} />
+        <directionalLight 
+          position={[3, 5, 4]} 
+          intensity={isMobile ? 0.3 : 0.4} 
+          castShadow={!isMobile} 
+        />
+        {/* Optimized neon spotlights - mobile-friendly settings */}
         <spotLight
           ref={leftSpotRef}
           color="#00ffff"
-          intensity={6} // Reduced from 8
-          angle={Math.PI / 6} // Slightly wider angle
-          penumbra={0.2} // Reduced penumbra
-          distance={20} // Reduced distance
-          decay={1.2} // Reduced decay
+          intensity={isMobile ? 4 : 6} // Lower intensity on mobile
+          angle={Math.PI / 6}
+          penumbra={isMobile ? 0.3 : 0.2} // Higher penumbra on mobile
+          distance={isMobile ? 15 : 20} // Shorter distance on mobile
+          decay={isMobile ? 1.5 : 1.2} // Higher decay on mobile
           position={[-5, 2.5, 3]}
-          castShadow
+          castShadow={!isMobile} // Disable shadows on mobile
         />
         <spotLight
           ref={rightSpotRef}
           color="#ff00ff"
-          intensity={6} // Reduced from 8
-          angle={Math.PI / 6} // Slightly wider angle
-          penumbra={0.2} // Reduced penumbra
-          distance={20} // Reduced distance
-          decay={1.2} // Reduced decay
+          intensity={isMobile ? 4 : 6} // Lower intensity on mobile
+          angle={Math.PI / 6}
+          penumbra={isMobile ? 0.3 : 0.2} // Higher penumbra on mobile
+          distance={isMobile ? 15 : 20} // Shorter distance on mobile
+          decay={isMobile ? 1.5 : 1.2} // Higher decay on mobile
           position={[5, 2.5, 3]}
-          castShadow
+          castShadow={!isMobile} // Disable shadows on mobile
         />
         {/* Additional rim lights for neon glow */}
 
         {/* Target object at the character's position */}
         <object3D ref={lightTargetRef} position={[0, 0, 0]} />
         <React.Suspense fallback={null}>
-          <CyclingModel index={index} rotationY={rotationValue} scale={modelScale} />
+          <CyclingModel index={index} rotationY={rotationValue} scale={modelScale} isMobile={isMobile} />
 
 
           {/* Optimized Text Model with lazy loading */}
@@ -201,7 +236,7 @@ const RenderModels: React.FC = React.memo(() => {
           {/* Torus Model */}
           {/* <TorusModel/> */}
 
-          <Environment preset="city" background={false} /> {/* Disabled background for better performance */}
+          {!isMobile && <Environment preset="city" background={false} />} {/* Disable environment on mobile */}
         </React.Suspense>
         <OrbitControls
           enabled={!isMobile}
