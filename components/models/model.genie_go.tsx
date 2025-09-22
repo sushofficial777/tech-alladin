@@ -152,20 +152,6 @@ export function GenieGo(props: ModelProps) {
         return cloned;
     }, [nodes.goggle_right_mota_belt, rightMotaBelt]);
 
-    //
-
-    const belt = useMemo(() => new THREE.MeshStandardMaterial({
-        color: "#333446",
-        metalness: 0.5,
-        roughness: .5
-    }), []);
-
-    const beltMeterial = useMemo(() => {
-        const cloned = nodes.belt_3.clone();
-        cloned.material = belt;
-        return cloned;
-    }, [nodes.belt_3, belt]);
-
 
 
     return (

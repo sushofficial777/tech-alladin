@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import useDeviceType from '@/components/hooks/useDeviceType'
 import ParticleAnimation from '../common/animationTestig';
 import TextMoving from './TextMoving';
+import DisSection from './testDis';
 const RenderModels = dynamic(() => import('./RenderModels'), { ssr: false })
 import { HeroMarquee } from './heroMarquee';
 const HeroSection = () => {
@@ -25,7 +26,8 @@ const HeroSection = () => {
                 >
                     <RenderModels />
                 </div>
-                {/* <HeroMarquee/> */}
+                <HeroMarquee/>
+                <DisSection/>
                 {/* <div className=" absolute top-0 left-0 w-full h-full bg-black/20 z-0 backdrop-blur"></div> */}
                 
                 {/* <div className=" absolute  top-[20%] -z-1 w-full h-full  ">

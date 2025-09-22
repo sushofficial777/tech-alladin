@@ -3,11 +3,12 @@
 import React, { useEffect, useRef, useState, useMemo, Suspense, lazy } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Billboard, Bounds, Center, Environment, OrbitControls, Text } from "@react-three/drei";
+import { Billboard, Bounds, Center, Environment, MeshDistortMaterial, OrbitControls, Sphere, Text } from "@react-three/drei";
 import gsap from "gsap";
 import { GenieGo } from "@/components/models";
 import useDeviceType from "@/components/hooks/useDeviceType";
 import InteractiveText from "../models/textModel";
+import { useCursorVelocity } from "@/lib/hooks/useCursorVelocity";
 
 // Lazy load the text component for better performance
 const LazyInteractiveText = lazy(() => import("../models/textModel"));
@@ -180,6 +181,25 @@ const RenderModels: React.FC = React.memo(() => {
     };
   }, []);
 
+
+  function DistortedSphere() {
+    const matRef:any = useRef<THREE.ShaderMaterial & { distort: number; speed: number }>(null!);
+    const velocity = useCursorVelocity();
+  
+    useFrame(() => {
+      if (matRef.current) {
+        matRef.current.distort = Math.min(0.6, velocity / 50);
+        matRef.current.speed = Math.min(4, velocity / 10);
+      }
+    });
+  
+    return (
+      <Sphere args={[1, 64, 64]} position={[0, 0, 0]}>
+        <MeshDistortMaterial ref={matRef} color="hotpink" />
+      </Sphere>
+    );
+  }
+
   return (
     <div style={{ width: "100%", height: "100vh" }}>
       <Canvas
@@ -246,6 +266,8 @@ const RenderModels: React.FC = React.memo(() => {
           maxPolarAngle={2}
           makeDefault
         />
+
+         {/* <DistortedSphere /> */}
       </Canvas>
     </div>
   );

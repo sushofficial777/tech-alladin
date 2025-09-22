@@ -1,59 +1,136 @@
 import React, { useEffect } from "react";
 import { gsap } from "gsap";
 
-export function HeroMarquee({}) {
-  useEffect(() => {
-    function roll(
-      targets: gsap.TweenTarget,
-      vars: gsap.TweenVars,
-      reverse?: number,
-    ) {
-      vars = vars || {};
-      vars.ease || (vars.ease = "none");
-      const tl = gsap.timeline({
-          repeat: -1,
-          onReverseComplete() {
-            this.totalTime(this.rawTime() + this.duration() * 10); // otherwise when the playhead gets back to the beginning, it'd stop. So push the playhead forward 10 iterations (it could be any number)
-          },
-        }),
-        elements = gsap.utils.toArray(targets) as HTMLElement[],
-        clones = elements.map((el) => {
-          let clone = el.cloneNode(true);
-          el.parentNode?.appendChild(clone);
-          return clone;
-        }),
-        positionClones = () =>
-          elements.forEach((el, i) =>
-            gsap.set(clones[i], {
-              position: "absolute",
-              overwrite: false,
-              top: el.offsetTop,
-              left: "100%",
-            }),
-          );
-      positionClones();
-      elements.forEach((el, i) =>
-        tl.to([el, clones[i]], { xPercent: reverse ? 100 : -100, ...vars }, 0),
-      );
-      window.addEventListener("resize", () => {
-        let time = tl.totalTime(); // record the current time
-        tl.totalTime(0); // rewind and clear out the timeline
-        positionClones(); // reposition
-        tl.totalTime(time); // jump back to the proper time
-      });
-      return tl;
-    }
+interface MarqueeSection {
+  text: string;
+  logo: string;
+  logoStyle: string;
+  gradient: string;
+}
 
-    roll(".rollingText", { duration: 15 });
+export function HeroMarquee({}) {
+  const marqueeSections: MarqueeSection[] = [
+    {
+      text: "Helping to provide telecom for the whole planet",
+      logo: "telfoni",
+      logoStyle: "text-[#00FF41] font-bold text-2xl",
+      gradient: "from-purple-900 to-purple-800"
+    },
+    {
+      text: "\"The brand is getting the attention we needed\"",
+      logo: "Фонд президента України",
+      logoStyle: "text-[#00FF41] font-bold text-lg",
+      gradient: "from-purple-800 to-purple-600"
+    },
+    {
+      text: "\"Now, our website showcases our brand at a new level\"",
+      logo: "MKA",
+      logoStyle: "text-[#00FF41] font-bold text-2xl",
+      gradient: "from-purple-600 to-gray-400"
+    },
+    {
+      text: "Scaling new brand visuals, even seen on Times Square",
+      logo: "LURKIT",
+      logoStyle: "text-[#00FF41] font-bold text-xl",
+      gradient: "from-gray-400 to-purple-800"
+    },
+    {
+      text: "Supporting a company from the Fortune 1000 list",
+      logo: "TRANSPOREON",
+      logoStyle: "text-[#00FF41] font-bold text-lg",
+      gradient: "from-purple-800 to-purple-900"
+    },
+    {
+      text: "Giving a fresh look service brand",
+      logo: "BITTER SWEET CARS",
+      logoStyle: "text-[#00FF41] font-bold text-sm",
+      gradient: "from-purple-900 to-purple-800"
+    }
+  ];
+
+  useEffect(() => {
+    const rollingElement = document.querySelector(".rollingText") as HTMLElement;
+    if (!rollingElement) return;
+
+    // Calculate total width of all sections
+    const totalWidth = marqueeSections.length * 400; // 400px per section * 2 sets
+    
+    // Create smooth infinite scroll animation
+    const tl = gsap.timeline({ repeat: -1 });
+    
+    tl.fromTo(rollingElement, 
+      { x: 0 },
+      { 
+        x: -totalWidth, 
+        duration: 25, 
+        ease: "none",
+        onComplete: () => {
+          gsap.set(rollingElement, { x: 0 });
+        }
+      }
+    );
+
+    // Handle window resize
+    const handleResize = () => {
+      const currentTime = tl.totalTime();
+      tl.kill();
+      tl.fromTo(rollingElement, 
+        { x: 0 },
+        { 
+          x: -totalWidth, 
+          duration: 25, 
+          ease: "none",
+          onComplete: () => {
+            gsap.set(rollingElement, { x: 0 });
+          }
+        }
+      );
+      tl.totalTime(currentTime);
+    };
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      gsap.killTweensOf(".rollingText");
+      tl.kill();
+      window.removeEventListener("resize", handleResize);
+      gsap.killTweensOf(rollingElement);
     };
   }, []);
+
   return (
-    <div className="wrapperRollingText anime pointer-events-none z-20  select-none  rounded-3xl tracking-[-0.1em] ">
-      <div className="rollingText  md:!text-[200px]">
-        - Design - Develop - Deploy   
+    <div className="wrapperRollingText w-full h-[120px] pointer-events-none z-20 select-none overflow-hidden relative">
+      <div className="rollingText flex h-full absolute top-0 left-0 whitespace-nowrap">
+        {/* First set of sections */}
+        {marqueeSections.map((section, index) => (
+          <div
+            key={`first-${index}`}
+            className={`inline-block flex-shrink-0 px-4 w-[400px] !h-[120px] relative`}
+          >
+            <p className="text-white text-sm font-medium leading-tight">
+              {section.text}
+            </p>
+            <div className={`${section.logoStyle}`}>
+              {section.logo}
+            </div>
+            <div className=" h-full absolute top-0 left-0 w-[1px] bg-purple-600 "></div>
+          </div>
+        ))}
+        
+        {/* Second set of sections for seamless loop */}
+        {marqueeSections.map((section, index) => (
+          <div
+            key={`second-${index}`}
+            className={`inline-block flex-shrink-0 px-4 w-[400px] !h-[120px] relative `}
+          >
+            <p className="text-white text-sm font-medium leading-tight">
+              {section.text}
+            </p>
+            <div className={`${section.logoStyle}`}>
+              {section.logo}
+            </div>
+            <div className=" h-full absolute top-0 left-0 w-[1px] bg-purple-600 "></div>
+          </div>
+        ))}
       </div>
     </div>
   );
